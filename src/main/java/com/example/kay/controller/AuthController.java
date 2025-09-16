@@ -19,6 +19,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
+@CrossOrigin(origins = "*")
 
 public class AuthController {
     private final AuthenticationManager authenticationManager;
@@ -87,7 +88,7 @@ public class AuthController {
         private String username;
         private String email;
         private String password;
-        private String Name;
+        private String name;
     }
 
     @Data
