@@ -8,8 +8,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
 
 @Entity
 @Data
@@ -27,10 +25,12 @@ public class User implements UserDetails {
 
     private String email;
 
-    @Lob
-    @Column(name = "profileimage")
-    @JdbcTypeCode(SqlTypes.LONGVARBINARY)
+    @Column(name = "profileImage")
     private byte[] profileImage;
+
+    @Column(name = "profile_image_path")
+    private String profileImagePath;
+
 
     private String name;
 
