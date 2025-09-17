@@ -93,7 +93,7 @@ public class AuthController {
         }
     }
 
-    // Serve profile image by user ID (for database-stored images)
+    // Serve profile image by user ID
     @GetMapping("/user/{userId}/profile-image")
     public ResponseEntity<byte[]> getUserProfileImage(@PathVariable Long userId) {
         try {
@@ -153,7 +153,7 @@ public class AuthController {
         userResponse.put("Name", user.getName());
         userResponse.put("role", user.getRole());
 
-        // Add profile image URL if user has profile image
+        // Adding profile image URL if user has profile image
         if (userService.hasProfileImage(user.getId())) {
             userResponse.put("profile_image", "/api/auth/user/" + user.getId() + "/profile-image");
         }

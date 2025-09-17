@@ -90,13 +90,6 @@ public class UserService implements UserDetailsService {
         return userRepository.save(user);
     }
 
-    public byte[] getProfileImage(String username) {
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
-
-        return user.getProfileImage();
-    }
-
 
 
     private void validateImageFile(MultipartFile file) {
@@ -132,10 +125,7 @@ public class UserService implements UserDetailsService {
     public User getUserById(Long userId) {
         return userRepository.findById(userId).orElse(null);
     }
-    public User getUserByIdOrThrow(Long userId) {
-        return userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
-    }
+
     public byte[] getUserProfileImage(Long userId) {
         User user = getUserById(userId);
         return user != null ? user.getProfileImage() : null;
@@ -144,5 +134,11 @@ public class UserService implements UserDetailsService {
         byte[] profileImage = getUserProfileImage(userId);
         return profileImage != null && profileImage.length > 0;
     }
+
+    public User findById(Long userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
+    }
+
 
 }
