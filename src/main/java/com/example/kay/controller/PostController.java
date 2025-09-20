@@ -5,6 +5,7 @@ import com.example.kay.model.User;
 import com.example.kay.service.PostService;
 import com.example.kay.service.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -59,4 +60,80 @@ public class PostController {
             return ResponseEntity.notFound().build();
         }
     }
+    //displaying posts for a particular user
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<List<Post>> getPostsByUserId(@PathVariable Long userId) {
+        try {
+            List<Post> userPosts = postService.findPostsByUserId(userId);
+            return ResponseEntity.ok(userPosts);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    // Get single post by ID - NEW ENDPOINT
+    @GetMapping("/{postId}")
+    public ResponseEntity<Post> getPostById(@PathVariable Long postId) {
+        try {
+            Post post = postService.findById(postId);
+            if (post != null) {
+                return ResponseEntity.ok(post);
+            } else {
+                return ResponseEntity.notFound().build();
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    // Update post - NEW ENDPOINT
+    @PutMapping("/{postId}")
+    public ResponseEntity<Post> updatePost(
+            @PathVariable Long postId,
+            @RequestParam String title,
+            @RequestParam String description,
+            @RequestParam String tags,
+            @RequestParam(required = false) MultipartFile coverImage,
+            @RequestParam Long userId) throws IOException {
+
+        try {
+            // Verify the user owns this post
+            Post existingPost = postService.findById(postId);
+            if (existingPost == null) {
+                return ResponseEntity.notFound().build();
+            }
+
+            if (!existingPost.getUser().getId().equals(userId)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            }
+
+            Post updatedPost = postService.updatePost(postId, title, description, tags, coverImage);
+            return ResponseEntity.ok(updatedPost);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    // Delete post - NEW ENDPOINT
+    @DeleteMapping("/delete/{postId}")
+    public ResponseEntity<String> deletePost(@PathVariable Long postId, @RequestParam(required = false) Long userId) {
+        try {
+            Post existingPost = postService.findById(postId);
+            if (existingPost == null) {
+                return ResponseEntity.notFound().build();
+            }
+
+            // Optional: Verify user ownership if userId is provided
+            if (userId != null && !existingPost.getUser().getId().equals(userId)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("You don't have permission to delete this post");
+            }
+
+            postService.deletePost(postId);
+            return ResponseEntity.ok("Post deleted successfully");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to delete post");
+        }
+    }
+
+
 }

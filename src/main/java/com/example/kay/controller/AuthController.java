@@ -28,33 +28,15 @@ public class AuthController {
     private final UserService userService;
     private final JwtService jwtService;
 
-    @PostMapping("/signup")
-    public ResponseEntity<?> signup(@RequestBody SignupRequest request) {
-        try {
-            User user = userService.createUser(
-                    request.getUsername(),
-                    request.getEmail(),
-                    request.getPassword(),
-                    request.getName()
-            );
-            String jwt = jwtService.generateToken(user);
-            Map<String, Object> response = new HashMap<>();
-            response.put("token", jwt);
-            response.put("user", createUserResponse(user));
-            return ResponseEntity.ok(response);
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
-        }
-    }
 
-    // Signup with profile
-    @PostMapping("/signup-with-image")
+    // Signup
+    @PostMapping("/signup")
     public ResponseEntity<?> signupWithImage(
             @RequestParam("username") String username,
             @RequestParam("email") String email,
             @RequestParam("password") String password,
             @RequestParam("name") String name,
-            @RequestParam("profileImage") MultipartFile profileImage) {
+            @RequestParam(value = "profileImage", required = false) MultipartFile profileImage) {
         try {
             User user = userService.createUser(username, email, password, name, profileImage);
             String jwt = jwtService.generateToken(user);
@@ -69,7 +51,6 @@ public class AuthController {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
-
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest request) {
         try {

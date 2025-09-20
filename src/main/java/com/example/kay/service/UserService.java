@@ -42,26 +42,6 @@ public class UserService implements UserDetailsService {
                 .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
     }
 
-    public User createUser(String username, String email, String password, String name) {
-        if (userRepository.existsByUsername(username)) {
-            throw new RuntimeException("Username already exists");
-        }
-        if (userRepository.existsByEmail(email)) {
-            throw new RuntimeException("Email already exists");
-        }
-
-        User user = new User();
-        user.setUsername(username);
-        user.setEmail(email);
-        user.setPassword(passwordEncoder.encode(password));
-        user.setName(name);
-        user.setRole(User.Role.USER);
-        user.setEnabled(true);
-        user.setCreatedAt(LocalDateTime.now());
-        user.setUpdatedAt(LocalDateTime.now());
-
-        return userRepository.save(user);
-    }
 
     public User createUser(String username, String email, String password, String name, MultipartFile profileImage) throws IOException {
         if (userRepository.existsByUsername(username)) {
