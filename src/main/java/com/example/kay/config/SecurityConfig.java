@@ -34,6 +34,9 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/posts/**").permitAll()
+                        .requestMatchers("/likes/**").permitAll()
+                        .requestMatchers("/comments/**").permitAll()
+
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session

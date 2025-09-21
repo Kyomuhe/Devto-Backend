@@ -71,7 +71,7 @@ public class PostController {
         }
     }
 
-    // Get single post by ID - NEW ENDPOINT
+    // Getting a single post by ID
     @GetMapping("/{postId}")
     public ResponseEntity<Post> getPostById(@PathVariable Long postId) {
         try {
@@ -86,7 +86,7 @@ public class PostController {
         }
     }
 
-    // Update post - NEW ENDPOINT
+    // Update post
     @PutMapping("/{postId}")
     public ResponseEntity<Post> updatePost(
             @PathVariable Long postId,
@@ -97,7 +97,6 @@ public class PostController {
             @RequestParam Long userId) throws IOException {
 
         try {
-            // Verify the user owns this post
             Post existingPost = postService.findById(postId);
             if (existingPost == null) {
                 return ResponseEntity.notFound().build();
@@ -114,7 +113,7 @@ public class PostController {
         }
     }
 
-    // Delete post - NEW ENDPOINT
+    // Delete post
     @DeleteMapping("/delete/{postId}")
     public ResponseEntity<String> deletePost(@PathVariable Long postId, @RequestParam(required = false) Long userId) {
         try {
@@ -123,7 +122,6 @@ public class PostController {
                 return ResponseEntity.notFound().build();
             }
 
-            // Optional: Verify user ownership if userId is provided
             if (userId != null && !existingPost.getUser().getId().equals(userId)) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).body("You don't have permission to delete this post");
             }

@@ -42,24 +42,22 @@ public class PostService {
         return postRepository.findById(postId).orElse(null);
     }
 
-    // Find posts by user ID - NEW METHOD
+    // Find posts by user ID
     public List<Post> findPostsByUserId(Long userId) {
         return postRepository.findByUserId(userId);
     }
 
-    // Update post - NEW METHOD
+    // Update post
     public Post updatePost(Long postId, String title, String description,
                            String tags, MultipartFile imageFile) throws IOException {
         Post existingPost = postRepository.findById(postId)
                 .orElseThrow(() -> new RuntimeException("Post not found"));
 
-        // Update fields
         existingPost.setTitle(title);
         existingPost.setDescription(description);
         existingPost.setTags(tags);
         existingPost.setUpdatedAt(LocalDateTime.now());
 
-        // Handle cover image update
         if (imageFile != null && !imageFile.isEmpty()) {
             existingPost.setCoverImage(imageFile.getBytes());
         }
@@ -67,7 +65,7 @@ public class PostService {
         return postRepository.save(existingPost);
     }
 
-    // Delete post - NEW METHOD
+    // Delete post
     public void deletePost(Long postId) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new RuntimeException("Post not found"));
@@ -75,11 +73,6 @@ public class PostService {
         postRepository.delete(post);
     }
 
-    // Check if user owns post - UTILITY METHOD
-    public boolean isUserOwnerOfPost(Long postId, Long userId) {
-        Post post = findById(postId);
-        return post != null && post.getUser().getId().equals(userId);
-    }
 
 
 
