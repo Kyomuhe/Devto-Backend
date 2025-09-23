@@ -18,8 +18,12 @@ public class Post {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long postId;
 
+    @Column(columnDefinition = "TEXT")
     private String title;
+
+    @Column(columnDefinition = "TEXT")
     private String description;
+
     private byte[] coverImage;
     private String tags;
     @Column(name = "created_at")

@@ -1,5 +1,6 @@
 package com.example.kay.controller;
 
+import com.example.kay.model.BookMark;
 import com.example.kay.model.Post;
 import com.example.kay.model.User;
 import com.example.kay.service.PostService;
@@ -133,5 +134,32 @@ public class PostController {
         }
     }
 
+    @PostMapping("/bookmark/{userId}/{postId}")
+    public ResponseEntity<String> bookmarkPost(@PathVariable Long userId, @PathVariable Long postId) {
+        String result = postService.bookmarkPost(userId, postId);
+        return ResponseEntity.ok(result);
+    }
+
+    @DeleteMapping("/unbookmark/{userId}/{postId}")
+    public ResponseEntity<String> unbookmarkPost(@PathVariable Long userId, @PathVariable Long postId) {
+        String result = postService.unbookmarkPost(userId, postId);
+        return ResponseEntity.ok(result);
+    }
+
+
+    @GetMapping("/displayBookMarks/{userId}")
+    public ResponseEntity<List<BookMark>> getUserBookmarks(@PathVariable Long userId) {
+        return ResponseEntity.ok(postService.getUserBookmarks(userId));
+    }
+
+    @GetMapping("/checkBookmark/{userId}/{postId}")
+    public ResponseEntity<Boolean> checkBookmarkStatus(@PathVariable Long userId, @PathVariable Long postId) {
+        try {
+            boolean isBookmarked = postService.isPostBookmarked(userId, postId);
+            return ResponseEntity.ok(isBookmarked);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(false);
+        }
+    }
 
 }
