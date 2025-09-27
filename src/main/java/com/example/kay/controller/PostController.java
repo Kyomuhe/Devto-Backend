@@ -32,7 +32,7 @@ public class PostController {
             @RequestParam(required = false) MultipartFile coverImage,
             @RequestParam Long userId) throws IOException {
 
-        // Get user from UserService (you'll need this)
+       
         User user = userService.findById(userId);
 
         Post post = postService.createPost(title, description, tags, coverImage, user);
