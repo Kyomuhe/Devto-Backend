@@ -25,12 +25,8 @@ public class User implements UserDetails {
 
     private String email;
 
-    @Column(name = "profileImage")
-    private byte[] profileImage;
-
-    @Column(name = "profile_image_path")
-    private String profileImagePath;
-
+    @Column(name = "profile_image")
+    private String profileImage;
 
     private String name;
 

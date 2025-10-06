@@ -1,6 +1,8 @@
 package com.example.kay.controller;
 
+import com.example.kay.Dto.SignupRequest;
 import com.example.kay.model.User;
+import com.example.kay.repository.UserRepository;
 import com.example.kay.service.*;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -12,33 +14,40 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
+import java.util.*;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 
 @RestController
-@RequestMapping("/api/auth")
+@RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
 @CrossOrigin(origins = "*")
 public class AuthController {
     private final AuthenticationManager authenticationManager;
     private final UserService userService;
     private final JwtService jwtService;
+    private final UserRepository userRepository;
+//    private final PasswordEncoder passwordEncoder;
+
 
 
     // Signup
     @PostMapping("/signup")
-    public ResponseEntity<?> signupWithImage(
-            @RequestParam("username") String username,
-            @RequestParam("email") String email,
-            @RequestParam("password") String password,
-            @RequestParam("name") String name,
-            @RequestParam(value = "profileImage", required = false) MultipartFile profileImage) {
+    public ResponseEntity<?> signupWithImage(@RequestBody SignupRequest signupRequest) {
         try {
-            User user = userService.createUser(username, email, password, name, profileImage);
+            if (signupRequest.getUsername() == null || signupRequest.getUsername().isEmpty()) {
+                return badRequest("user name is either null or empty");
+            }
+            if (signupRequest.getPassword() == null || signupRequest.getPassword().isEmpty()) {
+                return badRequest("user password is either null or empty");
+            }
+            if (signupRequest.getEmail() == null || signupRequest.getEmail().isEmpty()) {
+                return badRequest("user email is either null or empty");
+            }
+
+            User user = userService.createUser(signupRequest);
             String jwt = jwtService.generateToken(user);
             Map<String, Object> response = new HashMap<>();
             response.put("token", jwt);
@@ -52,8 +61,26 @@ public class AuthController {
         }
     }
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody LoginRequest request) {
+    public ResponseEntity<?> login(@RequestBody LoginRequest request ) {
         try {
+            if(request.getUsername()== null || request.getUsername().isEmpty()){
+                return badRequest( "username is either null or empty");
+            }
+            if(request.getPassword()== null || request.getPassword().isEmpty()){
+                return badRequest("password is either null or empty");
+            }
+            Optional<User> userExists = userRepository.findByUsername(request.getUsername());
+            if(userExists.isEmpty()){
+                return badRequest( "user does not exist");
+            }
+            BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+
+            User actualUser = userExists.get();
+
+            if(!passwordEncoder.matches(request.getPassword(), actualUser.getPassword())){
+                return badRequest("wrong password");
+            }
+
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
                             request.getUsername(),
@@ -62,15 +89,15 @@ public class AuthController {
             );
 
             User user = (User) authentication.getPrincipal();
-            String jwt = jwtService.generateToken(user);
 
+            String jwt = jwtService.generateToken(user);
             Map<String, Object> response = new HashMap<>();
             response.put("token", jwt);
             response.put("user", createUserResponse(user));
 
             return ResponseEntity.ok(response);
         } catch (AuthenticationException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Invalid username or password"));
+            return badRequest("Invalid username or password");
         }
     }
 
@@ -78,53 +105,55 @@ public class AuthController {
     @GetMapping("/user/{userId}/profile-image")
     public ResponseEntity<byte[]> getUserProfileImage(@PathVariable Long userId) {
         try {
-            byte[] imageBytes = userService.getUserProfileImage(userId);
+            String imageString = userService.getUserProfileImage(userId);
 
-            if (imageBytes == null || imageBytes.length == 0) {
+            if (imageString == null || imageString.isEmpty()) {
                 return ResponseEntity.notFound().build();
             }
 
-            // Determine content type based on image data
+            // Decoding base64 string to byte array
+            byte[] imageBytes = Base64.getDecoder().decode(imageString);
+
+            // Determining content type
             String contentType = determineImageContentType(imageBytes);
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.parseMediaType(contentType));
             headers.setContentLength(imageBytes.length);
-            headers.setCacheControl("max-age=3600"); // Cache for 1 hour
+            headers.setCacheControl("max-age=3600");
 
             return new ResponseEntity<>(imageBytes, headers, HttpStatus.OK);
 
+        } catch (IllegalArgumentException e) {
+            System.err.println("Base64 decoding failed: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         } catch (Exception e) {
+            System.err.println("Error retrieving image: " + e.getMessage());
+            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 
-    /**
-     * Determine image content type from byte array
-     */
     private String determineImageContentType(byte[] imageBytes) {
-        if (imageBytes.length < 4) {
-            return "application/octet-stream";
+        if (imageBytes.length >= 2) {
+            if (imageBytes[0] == (byte) 0xFF && imageBytes[1] == (byte) 0xD8) {
+                return "image/jpeg";
+            } else if (imageBytes[0] == (byte) 0x89 && imageBytes[1] == (byte) 0x50) {
+                return "image/png";
+            } else if (imageBytes[0] == (byte) 0x47 && imageBytes[1] == (byte) 0x49) {
+                return "image/gif";
+            }
         }
-
-        // Check file signature (magic numbers)
-        if (imageBytes[0] == (byte) 0xFF && imageBytes[1] == (byte) 0xD8) {
-            return "image/jpeg";
-        } else if (imageBytes[0] == (byte) 0x89 && imageBytes[1] == (byte) 0x50 &&
-                imageBytes[2] == (byte) 0x4E && imageBytes[3] == (byte) 0x47) {
-            return "image/png";
-        } else if (imageBytes[0] == (byte) 0x47 && imageBytes[1] == (byte) 0x49 &&
-                imageBytes[2] == (byte) 0x46) {
-            return "image/gif";
-        } else if (imageBytes.length >= 12 &&
-                imageBytes[8] == (byte) 0x57 && imageBytes[9] == (byte) 0x45 &&
-                imageBytes[10] == (byte) 0x42 && imageBytes[11] == (byte) 0x50) {
-            return "image/webp";
-        }
-
-        // Default to JPEG if we can't determine
         return "image/jpeg";
     }
+
+
+
+    private ResponseEntity<?> badRequest (String errorMessage){
+        return ResponseEntity.badRequest().body(Map.of("error", errorMessage));
+
+    }
+
 
     private Map<String, Object> createUserResponse(User user) {
         Map<String, Object> userResponse = new HashMap<>();
@@ -142,14 +171,7 @@ public class AuthController {
         return userResponse;
     }
 
-    // Binds incoming JSON to Java objects
-    @Data
-    public static class SignupRequest {
-        private String username;
-        private String email;
-        private String password;
-        private String name;
-    }
+
 
     @Data
     public static class LoginRequest {

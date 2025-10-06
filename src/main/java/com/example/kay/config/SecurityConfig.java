@@ -32,10 +32,10 @@ public class SecurityConfig {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers("/posts/**").permitAll()
-                        .requestMatchers("/likes/**").permitAll()
-                        .requestMatchers("/comments/**").permitAll()
+                        .requestMatchers("/api/v1/auth/**").permitAll()
+                        .requestMatchers("/api/v1/posts/**").permitAll()
+                        .requestMatchers("/api/v1/likes/**").permitAll()
+                        .requestMatchers("/api/v1/comments/**").permitAll()
 
                         .anyRequest().authenticated()
                 )

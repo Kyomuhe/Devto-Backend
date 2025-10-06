@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/likes")
+@RequestMapping("/api/v1/likes")
 @RequiredArgsConstructor
 @CrossOrigin(origins = "*")
 public class LikesController {
